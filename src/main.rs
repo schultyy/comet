@@ -1,6 +1,7 @@
 mod config;
 mod builder;
 mod logger;
+mod languages;
 extern crate rustc_serialize;
 extern crate docopt;
 extern crate term;
@@ -11,6 +12,7 @@ use std::process;
 use std::io::prelude::*;
 use std::fs::File;
 use std::io::Error;
+use std::path::Path;
 
 const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 const USAGE: &'static str = "
@@ -45,13 +47,23 @@ fn watch(configuration: config::Config, cwd: &str) {
     use notify::{RecommendedWatcher, Error, Watcher};
     use std::sync::mpsc::channel;
 
+    let watch_path = match languages::settings_for_language(&configuration.language) {
+        Some(settings) => {
+            Path::new(cwd).join(settings.watch_path)
+        },
+        None => {
+            logger::stderr(format!("[ERR] Could not fetch settings for {}", configuration.language));
+            std::process::exit(1)
+        }
+    };
+
     let (tx, rx) = channel();
 
     let w: Result<RecommendedWatcher, Error> = Watcher::new(tx);
 
     match w {
         Ok(mut watcher) => {
-            match watcher.watch(cwd) {
+            match watcher.watch(watch_path) {
                 Ok(()) => {
                     loop {
                         match rx.recv() {
