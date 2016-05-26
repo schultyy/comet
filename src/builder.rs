@@ -1,6 +1,4 @@
 use config::Config;
-use std::fmt;
-use std::error::Error;
 use std::process::{Command, Output};
 
 pub struct BuildResult {
