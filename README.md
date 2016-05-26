@@ -15,6 +15,10 @@ Configure a new Rust project:
 }
 ```
 
+Currently supported languages:
+
+- Rust
+
 Then run comet:
 
 ```
@@ -25,4 +29,10 @@ If you want to run a project from another directory, run:
 
 ```
 $ comet -p /Users/jane/other_project
+```
+
+To run comet in watch mode, use `-w`:
+
+```
+$ comet -p /Users/jane/other_project -w
 ```
