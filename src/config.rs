@@ -3,8 +3,8 @@ use rustc_serialize::json::DecoderError;
 
 #[derive(RustcDecodable)]
 pub struct Config {
-    language: String,
-    script: Vec<String>
+    pub language: String,
+    pub script: Vec<String>
 }
 
 pub fn from_json(json: &str) -> Result<Config, DecoderError> {
