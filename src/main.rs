@@ -1,10 +1,33 @@
 mod config;
+mod builder;
 extern crate rustc_serialize;
+extern crate docopt;
 
+use docopt::Docopt;
+use std::process;
 use std::io::prelude::*;
 use std::fs::File;
 use std::io::Error;
 
+const VERSION: &'static str = env!("CARGO_PKG_VERSION");
+const USAGE: &'static str = "
+comet ☄
+
+Usage:
+  comet [options]
+  comet --version
+
+Options:
+  -h --help              Show this screen.
+  --version              Show version.
+  -p PATH, --path=PATH   Specifies the working directory. [default: .]
+";
+
+#[derive(Debug, RustcDecodable)]
+struct Args {
+    flag_path: String,
+    flag_version: bool
+}
 
 fn read_config_file() -> Result<String, Error> {
     let mut f = try!(File::open(".comet.json"));
@@ -14,7 +37,18 @@ fn read_config_file() -> Result<String, Error> {
 }
 
 fn main() {
+    let args: Args = Docopt::new(USAGE)
+       .and_then(|d| d.decode())
+       .unwrap_or_else(|e| e.exit());
+
+
+    if args.flag_version {
+        println!("comet ☄ -- v{}", VERSION);
+        process::exit(0);
+    }
+
     println!("comet ☄");
+
     let json = match read_config_file() {
         Ok(fc) => fc,
         Err(err) => {
@@ -35,4 +69,29 @@ fn main() {
 
     println!("configuration language {}", configuration.language);
     println!("configuration script {:?}", configuration.script);
+
+    let cwd = if args.flag_path.len() == 0 {
+        ".".into()
+    } else {
+        args.flag_path
+    };
+
+    match builder::build(configuration, &cwd) {
+        Ok(results) => {
+            println!("Was success {}", results.was_success);
+
+            for stats in results.results {
+                println!("------------------\n");
+                println!("Command: {}", stats.script);
+                if stats.success {
+                    println!("{}", stats.stdout);
+                } else {
+                    println!("{}", stats.stderr);
+                }
+            }
+        },
+        Err(err) => {
+            println!("[ERR] {:?}", err);
+        }
+    }
 }

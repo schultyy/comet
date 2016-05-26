@@ -5,3 +5,4 @@ authors = ["Jan Schulte <hello@unexpected-co.de>"]
 
 [dependencies]
 rustc-serialize = "0.3"
+docopt = "0.6.80"
