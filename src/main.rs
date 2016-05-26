@@ -1,4 +1,5 @@
 mod config;
+mod builder;
 extern crate rustc_serialize;
 
 use std::io::prelude::*;
@@ -35,4 +36,13 @@ fn main() {
 
     println!("configuration language {}", configuration.language);
     println!("configuration script {:?}", configuration.script);
+
+    match builder::build(configuration) {
+        Ok(results) => {
+            println!("Was success {}", results.was_success);
+        },
+        Err(err) => {
+            println!("[ERR] {:?}", err);
+        }
+    }
 }
