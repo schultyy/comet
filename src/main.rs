@@ -1,15 +1,18 @@
 mod config;
 mod builder;
 mod logger;
+mod languages;
 extern crate rustc_serialize;
 extern crate docopt;
 extern crate term;
+extern crate notify;
 
 use docopt::Docopt;
 use std::process;
 use std::io::prelude::*;
 use std::fs::File;
 use std::io::Error;
+use std::path::Path;
 
 const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 const USAGE: &'static str = "
@@ -23,12 +26,14 @@ Options:
   -h --help              Show this screen.
   --version              Show version.
   -p PATH, --path=PATH   Specifies the working directory. [default: .]
+  -w --watch             Watch the working directory.
 ";
 
 #[derive(Debug, RustcDecodable)]
 struct Args {
     flag_path: String,
-    flag_version: bool
+    flag_version: bool,
+    flag_watch: bool
 }
 
 fn read_config_file() -> Result<String, Error> {
@@ -36,6 +41,70 @@ fn read_config_file() -> Result<String, Error> {
     let mut file_content = String::new();
     try!(f.read_to_string(&mut file_content));
     Ok(file_content)
+}
+
+fn watch(configuration: config::Config, cwd: &str) {
+    use notify::{RecommendedWatcher, Error, Watcher};
+    use std::sync::mpsc::channel;
+
+    let watch_path = match languages::settings_for_language(&configuration.language) {
+        Some(settings) => {
+            Path::new(cwd).join(settings.watch_path)
+        },
+        None => {
+            logger::stderr(format!("[ERR] Could not fetch settings for {}", configuration.language));
+            std::process::exit(1)
+        }
+    };
+
+    let (tx, rx) = channel();
+
+    let w: Result<RecommendedWatcher, Error> = Watcher::new(tx);
+
+    match w {
+        Ok(mut watcher) => {
+            match watcher.watch(watch_path) {
+                Ok(()) => {
+                    loop {
+                        match rx.recv() {
+                            _ => {
+                                logger::stdout("detected change. starting build");
+                                run(&configuration, cwd);
+                            }
+                        }
+                    }
+                },
+                Err(err) => {
+                    logger::stderr("[ERR] Error while watching");
+                    logger::stderr(format!("{:?}", err));
+                }
+            }
+        },
+        Err(err) => {
+            logger::stderr("[ERR] Failed to instantiate filesystem watcher");
+            logger::stderr(format!("Reason: {:?}", err));
+        }
+    }
+}
+
+fn run(configuration: &config::Config, cwd: &str) {
+    match builder::build(configuration, cwd) {
+        Ok(results) => {
+            for stats in results.results {
+                logger::stdout("------------------\n");
+                if stats.success {
+                    logger::success(format!("Command: {}", stats.script));
+                    logger::success(stats.stdout);
+                } else {
+                    logger::stderr(format!("Command: {}", stats.script));
+                    logger::stderr(stats.stderr);
+                }
+            }
+        },
+        Err(err) => {
+            println!("[ERR] {:?}", err);
+        }
+    }
 }
 
 fn main() {
@@ -78,21 +147,11 @@ fn main() {
         args.flag_path
     };
 
-    match builder::build(configuration, &cwd) {
-        Ok(results) => {
-            for stats in results.results {
-                logger::stdout("------------------\n");
-                if stats.success {
-                    logger::success(format!("Command: {}", stats.script));
-                    logger::success(stats.stdout);
-                } else {
-                    logger::stderr(format!("Command: {}", stats.script));
-                    logger::stderr(stats.stderr);
-                }
-            }
-        },
-        Err(err) => {
-            println!("[ERR] {:?}", err);
-        }
+    if args.flag_watch {
+        logger::stdout("Comet is watching...");
+        watch(configuration, &cwd);
+    }
+    else {
+        run(&configuration, &cwd);
     }
 }
