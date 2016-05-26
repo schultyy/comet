@@ -70,7 +70,13 @@ fn main() {
     println!("configuration language {}", configuration.language);
     println!("configuration script {:?}", configuration.script);
 
-    match builder::build(configuration) {
+    let cwd = if args.flag_path.len() == 0 {
+        ".".into()
+    } else {
+        args.flag_path
+    };
+
+    match builder::build(configuration, &cwd) {
         Ok(results) => {
             println!("Was success {}", results.was_success);
         },

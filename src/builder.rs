@@ -7,8 +7,7 @@ pub struct BuildResult {
     pub was_success: bool
 }
 
-pub fn build(config: Config) -> Result<BuildResult, String> {
-    let working_dir = ".";
+pub fn build(config: Config, working_dir: &str) -> Result<BuildResult, String> {
 
     let outputs = config.script.iter()
         .map(|script| execute_script(script, working_dir))
