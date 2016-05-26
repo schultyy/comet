@@ -1,7 +1,9 @@
 mod config;
 mod builder;
+mod logger;
 extern crate rustc_serialize;
 extern crate docopt;
+extern crate term;
 
 use docopt::Docopt;
 use std::process;
@@ -43,17 +45,17 @@ fn main() {
 
 
     if args.flag_version {
-        println!("comet ☄ -- v{}", VERSION);
+        logger::stdout(format!("comet ☄ -- v{}", VERSION));
         process::exit(0);
     }
 
-    println!("comet ☄");
+    logger::stdout("comet ☄");
 
     let json = match read_config_file() {
         Ok(fc) => fc,
         Err(err) => {
-            println!("[ERR] Could not read configuration file");
-            println!("[ERR] Reason {:?}", err);
+            logger::stderr("[ERR] Could not read configuration file");
+            logger::stderr(format!("[ERR] Reason {:?}", err));
             std::process::exit(1)
         }
     };
@@ -61,14 +63,14 @@ fn main() {
     let configuration = match config::from_json(&json) {
         Ok(cfg) => cfg,
         Err(err) => {
-            println!("[ERR] Failed to parse configuration file");
-            println!("[ERR] Reason: {:?}", err);
+            logger::stderr("[ERR] Failed to parse configuration file");
+            logger::stderr(format!("[ERR] Reason: {:?}", err));
             std::process::exit(1)
         }
     };
 
-    println!("configuration language {}", configuration.language);
-    println!("configuration script {:?}", configuration.script);
+    logger::stdout(format!("configuration language {}", configuration.language));
+    logger::stdout(format!("configuration script {:?}", configuration.script));
 
     let cwd = if args.flag_path.len() == 0 {
         ".".into()
@@ -78,15 +80,14 @@ fn main() {
 
     match builder::build(configuration, &cwd) {
         Ok(results) => {
-            println!("Was success {}", results.was_success);
-
             for stats in results.results {
-                println!("------------------\n");
-                println!("Command: {}", stats.script);
+                logger::stdout("------------------\n");
                 if stats.success {
-                    println!("{}", stats.stdout);
+                    logger::success(format!("Command: {}", stats.script));
+                    logger::success(stats.stdout);
                 } else {
-                    println!("{}", stats.stderr);
+                    logger::stderr(format!("Command: {}", stats.script));
+                    logger::stderr(stats.stderr);
                 }
             }
         },

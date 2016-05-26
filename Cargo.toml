@@ -18,3 +18,4 @@ include = [
 [dependencies]
 rustc-serialize = "0.3"
 docopt = "0.6.80"
+term = "0.4.4"
