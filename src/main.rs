@@ -38,6 +38,32 @@ fn read_config_file() -> Result<String, Error> {
     Ok(file_content)
 }
 
+fn run(configuration: config::Config, args: Args) {
+    let cwd = if args.flag_path.len() == 0 {
+        ".".into()
+    } else {
+        args.flag_path
+    };
+
+    match builder::build(configuration, &cwd) {
+        Ok(results) => {
+            for stats in results.results {
+                logger::stdout("------------------\n");
+                if stats.success {
+                    logger::success(format!("Command: {}", stats.script));
+                    logger::success(stats.stdout);
+                } else {
+                    logger::stderr(format!("Command: {}", stats.script));
+                    logger::stderr(stats.stderr);
+                }
+            }
+        },
+        Err(err) => {
+            println!("[ERR] {:?}", err);
+        }
+    }
+}
+
 fn main() {
     let args: Args = Docopt::new(USAGE)
        .and_then(|d| d.decode())
@@ -72,27 +98,5 @@ fn main() {
     logger::stdout(format!("configuration language {}", configuration.language));
     logger::stdout(format!("configuration script {:?}", configuration.script));
 
-    let cwd = if args.flag_path.len() == 0 {
-        ".".into()
-    } else {
-        args.flag_path
-    };
-
-    match builder::build(configuration, &cwd) {
-        Ok(results) => {
-            for stats in results.results {
-                logger::stdout("------------------\n");
-                if stats.success {
-                    logger::success(format!("Command: {}", stats.script));
-                    logger::success(stats.stdout);
-                } else {
-                    logger::stderr(format!("Command: {}", stats.script));
-                    logger::stderr(stats.stderr);
-                }
-            }
-        },
-        Err(err) => {
-            println!("[ERR] {:?}", err);
-        }
-    }
+    run(configuration, args);
 }
