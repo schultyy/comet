@@ -79,6 +79,16 @@ fn main() {
     match builder::build(configuration, &cwd) {
         Ok(results) => {
             println!("Was success {}", results.was_success);
+
+            for stats in results.results {
+                println!("------------------\n");
+                println!("Command: {}", stats.script);
+                if stats.success {
+                    println!("{}", stats.stdout);
+                } else {
+                    println!("{}", stats.stderr);
+                }
+            }
         },
         Err(err) => {
             println!("[ERR] {:?}", err);

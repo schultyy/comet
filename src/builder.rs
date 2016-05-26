@@ -2,17 +2,36 @@ use config::Config;
 use std::process::{Command, Output};
 
 pub struct BuildResult {
-    pub was_success: bool
+    pub script: String,
+    pub success: bool,
+    pub stdout: String,
+    pub stderr: String
 }
 
-pub fn build(config: Config, working_dir: &str) -> Result<BuildResult, String> {
+pub struct BuildResultStats {
+    pub was_success: bool,
+    pub results: Vec<BuildResult>
+}
 
-    let outputs = config.script.iter()
-        .map(|script| execute_script(script, working_dir))
-        .collect::<Vec<Output>>();
+pub fn build(config: Config, working_dir: &str) -> Result<BuildResultStats, String> {
 
-    Ok(BuildResult {
-        was_success: outputs.iter().all(|o| o.status.clone().success())
+    let mut stats = Vec::new();
+
+    for script in config.script {
+        let result = execute_script(&script, working_dir);
+        let build_result = BuildResult {
+            script: script.clone(),
+            success: result.status.clone().success(),
+            stdout: String::from_utf8_lossy(&result.stdout).to_string(),
+            stderr: String::from_utf8_lossy(&result.stderr).to_string()
+        };
+
+        stats.push(build_result);
+    }
+
+    Ok(BuildResultStats {
+        was_success: stats.iter().all(|s| s.success),
+        results: stats
     })
 }
 
