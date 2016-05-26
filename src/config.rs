@@ -1,4 +1,5 @@
-use rustc_serialize::json;
+use rustc_serialize::{json};
+use rustc_serialize::json::DecoderError;
 
 #[derive(RustcDecodable)]
 pub struct Config {
@@ -6,8 +7,8 @@ pub struct Config {
     script: Vec<String>
 }
 
-pub fn from_json(json: &str) -> Config {
-    json::decode(json).unwrap()
+pub fn from_json(json: &str) -> Result<Config, DecoderError> {
+    json::decode(json)
 }
 
 #[cfg(test)]
@@ -23,7 +24,7 @@ mod tests {
                 \"cargo test\"
               ]
             }";
-        let config = from_json(json);
+        let config = from_json(json).unwrap();
         assert_eq!(config.language, "rust");
         assert_eq!(config.script, vec!("cargo test"));
     }
