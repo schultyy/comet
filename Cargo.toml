@@ -2,6 +2,18 @@
 name = "comet"
 version = "0.1.0"
 authors = ["Jan Schulte <hello@unexpected-co.de>"]
+license = "MIT"
+readme = "README.md"
+homepage = "https://github.com/schultyy/comet"
+
+include = [
+    "Cargo.toml",
+    "README*",
+    "LICENSE*",
+    "src/**/*",
+    "tests/**/*",
+    "examples/**/*"
+]
 
 [dependencies]
 rustc-serialize = "0.3"
