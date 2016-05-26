@@ -4,6 +4,7 @@ mod logger;
 extern crate rustc_serialize;
 extern crate docopt;
 extern crate term;
+extern crate notify;
 
 use docopt::Docopt;
 use std::process;
@@ -23,12 +24,14 @@ Options:
   -h --help              Show this screen.
   --version              Show version.
   -p PATH, --path=PATH   Specifies the working directory. [default: .]
+  -w --watch             Watch the working directory.
 ";
 
 #[derive(Debug, RustcDecodable)]
 struct Args {
     flag_path: String,
-    flag_version: bool
+    flag_version: bool,
+    flag_watch: bool
 }
 
 fn read_config_file() -> Result<String, Error> {
@@ -38,14 +41,42 @@ fn read_config_file() -> Result<String, Error> {
     Ok(file_content)
 }
 
-fn run(configuration: config::Config, args: Args) {
-    let cwd = if args.flag_path.len() == 0 {
-        ".".into()
-    } else {
-        args.flag_path
-    };
+fn watch(configuration: config::Config, cwd: &str) {
+    use notify::{RecommendedWatcher, Error, Watcher};
+    use std::sync::mpsc::channel;
 
-    match builder::build(configuration, &cwd) {
+    let (tx, rx) = channel();
+
+    let w: Result<RecommendedWatcher, Error> = Watcher::new(tx);
+
+    match w {
+        Ok(mut watcher) => {
+            match watcher.watch(cwd) {
+                Ok(()) => {
+                    loop {
+                        match rx.recv() {
+                            _ => {
+                                logger::stdout("detected change. starting build");
+                                run(&configuration, cwd);
+                            }
+                        }
+                    }
+                },
+                Err(err) => {
+                    logger::stderr("[ERR] Error while watching");
+                    logger::stderr(format!("{:?}", err));
+                }
+            }
+        },
+        Err(err) => {
+            logger::stderr("[ERR] Failed to instantiate filesystem watcher");
+            logger::stderr(format!("Reason: {:?}", err));
+        }
+    }
+}
+
+fn run(configuration: &config::Config, cwd: &str) {
+    match builder::build(configuration, cwd) {
         Ok(results) => {
             for stats in results.results {
                 logger::stdout("------------------\n");
@@ -98,5 +129,17 @@ fn main() {
     logger::stdout(format!("configuration language {}", configuration.language));
     logger::stdout(format!("configuration script {:?}", configuration.script));
 
-    run(configuration, args);
+    let cwd = if args.flag_path.len() == 0 {
+        ".".into()
+    } else {
+        args.flag_path
+    };
+
+    if args.flag_watch {
+        logger::stdout("Comet is watching...");
+        watch(configuration, &cwd);
+    }
+    else {
+        run(&configuration, &cwd);
+    }
 }

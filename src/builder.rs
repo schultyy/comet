@@ -13,11 +13,11 @@ pub struct BuildResultStats {
     pub results: Vec<BuildResult>
 }
 
-pub fn build(config: Config, working_dir: &str) -> Result<BuildResultStats, String> {
+pub fn build(config: &Config, working_dir: &str) -> Result<BuildResultStats, String> {
 
     let mut stats = Vec::new();
 
-    for script in config.script {
+    for script in &config.script {
         let result = execute_script(&script, working_dir);
         let build_result = BuildResult {
             script: script.clone(),
