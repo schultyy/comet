@@ -36,8 +36,8 @@ struct Args {
     flag_watch: bool
 }
 
-fn read_config_file() -> Result<String, Error> {
-    let mut f = try!(File::open(".comet.json"));
+fn read_config_file(cwd: &str) -> Result<String, Error> {
+    let mut f = try!(File::open(Path::new(cwd).join(".comet.json")));
     let mut file_content = String::new();
     try!(f.read_to_string(&mut file_content));
     Ok(file_content)
@@ -120,7 +120,13 @@ fn main() {
 
     logger::stdout("comet ☄");
 
-    let json = match read_config_file() {
+    let cwd = if args.flag_path.len() == 0 {
+        ".".into()
+    } else {
+        args.flag_path
+    };
+
+    let json = match read_config_file(&cwd) {
         Ok(fc) => fc,
         Err(err) => {
             logger::stderr("[ERR] Could not read configuration file");
@@ -140,12 +146,6 @@ fn main() {
 
     logger::stdout(format!("configuration language {}", configuration.language));
     logger::stdout(format!("configuration script {:?}", configuration.script));
-
-    let cwd = if args.flag_path.len() == 0 {
-        ".".into()
-    } else {
-        args.flag_path
-    };
 
     if args.flag_watch {
         logger::stdout("Comet is watching...");
