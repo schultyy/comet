@@ -1,7 +1,6 @@
 mod config;
 mod builder;
 mod logger;
-mod languages;
 extern crate rustc_serialize;
 extern crate docopt;
 extern crate term;
@@ -47,15 +46,7 @@ fn watch(configuration: config::Config, cwd: &str) {
     use notify::{RecommendedWatcher, Error, Watcher};
     use std::sync::mpsc::channel;
 
-    let watch_path = match languages::settings_for_language(&configuration.language) {
-        Some(settings) => {
-            Path::new(cwd).join(settings.watch_path)
-        },
-        None => {
-            logger::stderr(format!("[ERR] Could not fetch settings for {}", configuration.language));
-            std::process::exit(1)
-        }
-    };
+    let watch_path = Path::new(cwd).join(&configuration.watch);
 
     let (tx, rx) = channel();
 
@@ -144,7 +135,6 @@ fn main() {
         }
     };
 
-    logger::stdout(format!("configuration language {}", configuration.language));
     logger::stdout(format!("configuration script {:?}", configuration.script));
 
     if args.flag_watch {

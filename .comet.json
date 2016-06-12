@@ -1,7 +1,7 @@
 {
-  "language": "rust",
   "script": [
     "cargo clean",
     "cargo test"
-  ]
+  ],
+  "watch": "src/"
 }

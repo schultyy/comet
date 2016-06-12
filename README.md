@@ -4,20 +4,17 @@
 
 ## Configuration
 
-Configure a new Rust project:
+To configure a new project, place a `.comet.json` in your project directory:
 
 ```json
 {
-  "language": "rust",
   "script": [
     "cargo test"
-  ]
+  ],
+  "watch": "src/"
 }
 ```
-
-Currently supported languages:
-
-- Rust
+Here you see an example configuration for a Rust project.
 
 Then run comet:
 
