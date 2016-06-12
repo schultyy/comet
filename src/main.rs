@@ -135,7 +135,6 @@ fn main() {
         }
     };
 
-    logger::stdout(format!("configuration language {}", configuration.language));
     logger::stdout(format!("configuration script {:?}", configuration.script));
 
     if args.flag_watch {
