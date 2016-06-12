@@ -1,3 +1,13 @@
+<a name="v1.1.1"></a>
+## v1.1.1 (2016-06-12)
+
+
+#### Bug Fixes
+
+*   take cwd and path argument into account ([3d1ede79](3d1ede79))
+
+
+
 <a name="v1.1.0"></a>
 ## v1.1.0 (2016-05-26)
 
