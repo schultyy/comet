@@ -1,3 +1,18 @@
+<a name="v2.0.0"></a>
+## v2.0.0 (2016-06-12)
+
+
+#### Features
+
+*   Read watch path from configuration file ([ec3bb0ba](ec3bb0ba))
+*   add watch property to configuration file ([d2ec2a09](d2ec2a09))
+
+#### Breaking Changes
+
+*   add watch property to configuration file ([d2ec2a09](d2ec2a09))
+
+
+
 <a name="v1.1.1"></a>
 ## v1.1.1 (2016-06-12)
 
