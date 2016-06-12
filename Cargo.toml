@@ -1,6 +1,6 @@
 [package]
 name = "comet"
-version = "1.1.0"
+version = "1.1.1"
 authors = ["Jan Schulte <hello@unexpected-co.de>"]
 license = "MIT"
 readme = "README.md"
