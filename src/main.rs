@@ -1,7 +1,6 @@
 mod config;
 mod builder;
 mod logger;
-mod languages;
 extern crate rustc_serialize;
 extern crate docopt;
 extern crate term;
